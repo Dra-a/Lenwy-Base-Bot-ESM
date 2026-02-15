@@ -30,13 +30,39 @@ import Ai4Chat from "./scrape/Ai4Chat.js"
 const processedMessages = new Set()
 const groupMetadataCache = new Map();
 
+// Read Json File
+function readJSONSync(pathFile) {
+    try {
+        return JSON.parse(fs.readFileSync(pathFile, 'utf8'))
+    } catch {
+        return []
+    }
+}
+
 // Export Handler
 export default async (lenwy, m, meta) => {
-    const { body, mediaType, sender, pushname } = meta
+    const { body, mediaType, sender: originalSender, pushname } = meta 
     const msg = m.messages[0]
     if (!msg.message) return
 
-    // Jangan Balas Pesan Sendiri (Bot)
+    const replyJid = msg.key.remoteJid;
+
+    let authJid = originalSender; 
+
+    const key = msg.key;
+    if (key.participantAlt) {
+      authJid = key.participantAlt;
+    } else if (key.remoteJidAlt) {
+      authJid = key.remoteJidAlt;
+    } 
+    
+    const sender = authJid; 
+    const normalizedSender = jidNormalizedUser(sender);
+
+    // console.log(chalk.yellow(`[DEBUG JID] Sender Original: ${originalSender}`));
+    // console.log(chalk.yellow(`[DEBUG JID] Sender Auth (PN): ${sender}`));
+    // console.log(chalk.green(`[DEBUG JID] Sender Normal: ${normalizedSender}`));
+
     if (msg.key.fromMe) return
 
     // Anti Double
@@ -44,17 +70,16 @@ export default async (lenwy, m, meta) => {
     processedMessages.add(msg.key.id)
     setTimeout(() => processedMessages.delete(msg.key.id), 30000)
 
-    // Default Quoted Lenwy
-    const pplu = fs.readFileSync(globalThis.MenuImage) // Ganti Sesuai Keinginan
+    const pplu = fs.readFileSync(globalThis.MenuImage)
     const len = {
         key: {
             participant: `0@s.whatsapp.net`,
-            ...(msg.chat ? { remoteJid: `status@broadcast` } : {})
+            remoteJid: replyJid 
         },
         message: {
             contactMessage: {
                 displayName: `${pushname}`,
-                vcard: `BEGIN:VCARD\nVERSION:3.0\nN:XL;Lenwy,;;;\nFN: Lenwy V2.2\nitem1.TEL;waid=${sender.split("@")[0]}:+${sender.split("@")[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`,
+                vcard: `BEGIN:VCARD\nVERSION:3.0\nN:XL;Lenwy,;;;\nFN: Lenwy V1.0\nitem1.TEL;waid=${sender.split("@")[0]}:+${sender.split("@")[0]}\nitem1.X-ABLabel:Ponsel\nEND:VCARD`,
                 jpegThumbnail: pplu,
                 thumbnail: pplu,
                 sendEphemeral: true
@@ -80,26 +105,39 @@ let usedPrefix = null
     const q = args.join(" ")
 
     // Custom Reply
-    const lenwyreply = (teks) => lenwy.sendMessage(sender, { text: teks }, { quoted: len })
+    const lenwyreply = (teks) => lenwy.sendMessage(replyJid, { text: teks }, { quoted: len })
 
     // Gambar Menu
     const MenuImage = fs.readFileSync(globalThis.MenuImage)
 
     // Deteksi Grup & Admin
-    const isGroup = sender.endsWith("@g.us")
+    const isGroup = replyJid.endsWith("@g.us") 
+
+    // Hanya Private
+    const IsPriv = !isGroup
+
     let isAdmin = false
     let isBotAdmin = false
 
+    const GROUP_CACHE_TTL = 5 * 1000 // 5 Detik
+
     if (isGroup) {
-      let metadata = groupMetadataCache.get(sender);
-      if (!metadata) {
+    let metadataData = groupMetadataCache.get(replyJid);
+
+    if (!metadataData || Date.now() - metadataData.time > GROUP_CACHE_TTL) {
         try {
-          metadata = await lenwy.groupMetadata(sender);
-          groupMetadataCache.set(sender, metadata);
+            const metadata = await lenwy.groupMetadata(replyJid);
+            groupMetadataCache.set(replyJid, {
+                data: metadata,
+                time: Date.now()
+            });
+        metadataData = groupMetadataCache.get(replyJid);
         } catch (e) {
-          console.error("Gagal mengambil metadata grup:", e);
+            console.error("Gagal mengambil metadata grup:", e);
         }
-      }
+    }
+
+    const metadata = metadataData?.data;
 
       if (metadata) {
         const participants = metadata.participants;
@@ -115,24 +153,19 @@ let usedPrefix = null
         if (botParticipant) {
           isBotAdmin = botParticipant.admin === 'admin' || botParticipant.admin === 'superadmin';
         } else {
-          try {
-            await lenwy.groupUpdateSubject(sender, metadata.subject);
-            isBotAdmin = true;
-          } catch (e) {
-            isBotAdmin = false;
-          }
+          isBotAdmin = false;
         }
       }
     }
 
     // Premium
     const premiumPath = path.join(process.cwd(), 'WhatsApp', 'database', 'premium.json')
-    const premiumUsers = JSON.parse(fs.readFileSync(premiumPath, 'utf8') || '[]')
-    const isPremium = premiumUsers.includes(sender)
+    const premiumUsers = readJSONSync(premiumPath)
+    const isPremium = premiumUsers.includes(normalizedSender) 
 
     const CreatorPath = path.join(process.cwd(), 'WhatsApp', 'database', 'creator.json')
-    const isCreatorArray = JSON.parse(fs.readFileSync(CreatorPath, 'utf8') || '[]')
-    const isLenwy = isCreatorArray.includes(sender) 
+    const isCreatorArray = readJSONSync(CreatorPath)
+    const isLenwy = isCreatorArray.includes(normalizedSender)
     // Command Yang Diperbolehkan User Free
     const allowedPrivateCommands = ['menu', 'aimenu', 'downmenu', 'downloadmenu']
 
@@ -143,13 +176,13 @@ let usedPrefix = null
 switch (command) {
 
 case "menu": {
-  await lenwy.sendMessage(sender, {
+  await lenwy.sendMessage(replyJid, {
     image: MenuImage,
     caption: globalThis.lenwymenu,
-    mentions: [sender]
+    mentions: [normalizedSender]
   }, { quoted: len })
 }
-break 
+break
 
 case "admin": {
     if (!isAdmin) return lenwyreply(globalThis.mess.admin)
@@ -274,4 +307,5 @@ break
         }
     }
 }
+
 
