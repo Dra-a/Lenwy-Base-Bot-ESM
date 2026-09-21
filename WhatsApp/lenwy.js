@@ -1,19 +1,3 @@
-/*  
-
-  Made By Lenwy
-  Base : Lenwy
-  WhatsApp : wa.me/6283829814737
-  Telegram : t.me/ilenwy
-  Youtube : @Lenwy
-
-  Channel : https://whatsapp.com/channel/0029VaGdzBSGZNCmoTgN2K0u
-
-  Copy Code?, Recode?, Rename?, Reupload?, Reseller? Taruh Credit Ya :D
-
-  Mohon Untuk Tidak Menghapus Watermark Di Dalam Kode Ini
-
-*/
-
 // Import Module
 import "./len.js"
 import "./database/Menu/LenwyMenu.js"
@@ -22,9 +6,6 @@ import fs from "fs"
 import axios from "axios";
 import { downloadContentFromMessage, jidNormalizedUser, getContentType } from "@whiskeysockets/baileys"
 import path from 'path'
-
-// Scrape
-import Ai4Chat from "./scrape/Ai4Chat.js"
 
 // Track Messages
 const processedMessages = new Set()
@@ -97,12 +78,10 @@ let usedPrefix = null
     }
     if (!usedPrefix && !globalThis.noprefix) return
 
-    const args = usedPrefix
-        ? body.slice(usedPrefix.length).trim().split(" ")
-        : body.trim().split(" ")
-
+    const text = usedPrefix ? body.slice(usedPrefix.length).trim() : body.trim()
+    const args = text.split(/\s+/)
     const command = args.shift().toLowerCase()
-    const q = args.join(" ")
+    const q = text.slice(command.length).trim()
 
     // Custom Reply
     const lenwyreply = (teks) => lenwy.sendMessage(replyJid, { text: teks }, { quoted: len })
@@ -167,11 +146,7 @@ let usedPrefix = null
     const isCreatorArray = readJSONSync(CreatorPath)
     const isLenwy = isCreatorArray.includes(normalizedSender)
     // Command Yang Diperbolehkan User Free
-    const allowedPrivateCommands = ['menu', 'aimenu', 'downmenu', 'downloadmenu']
-
-    if (!isGroup && !isPremium && !isLenwy && !allowedPrivateCommands.includes(command)) {
-        return lenwyreply("⚠️ *Kamu Bukan User Premium!*\n\nKamu Hanya Bisa Menggunakan Fitur *Menu* Di Private Chat");
-    }
+    const allowedPrivateCommands = ['menu', 'downmenu', 'downloadmenu', 'operasional', 'tt', 'ttdl', 'tiktok']
 
 switch (command) {
 
@@ -202,62 +177,140 @@ case "private": {
 }
 break
 
-case "panel": {
-lenwyreply(`📑 *Halo Ini List Harga panelnya Ya*
+// Operasional Menu =========================
 
-*[+] Ram 2Gb*
-*[+] CPU 120%*
-*[+] Disk 5Gb*
-*[+] Rp10.000/Bulan*
+case "operasional": {
+    if (!q) return lenwyreply(globalThis.operasionalmenu), lenwyreply(globalThis.operasionalmenu2);
+    let tanggal, jenis, nominal, dibayar, status, keterangan;
+    tanggal = new Date().toLocaleDateString('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    dibayar = "Putri";
+    status = "Reimburse";
+    keterangan = ["Bensin dan upah", "Parkir", "Pemindahan produk"]
+    let i = 0;
+    for (const match of q.matchAll(/(.+?):\s*(\d+(?:,\d+)?)\s*rb/g)) {
+        jenis = match[1];
+        nominal = Number(match[2].replace(',', '.')) * 1000;
+        if (nominal !== '') {
+            const data = {
+                tanggal: tanggal,
+                jenis: jenis,
+                nominal: nominal,
+                dibayar: dibayar,
+                status: status,
+                keterangan: keterangan[i]
+            };
+            const jsonData = JSON.stringify(data);
+            const response = await fetch(
+                "https://script.google.com/macros/s/AKfycby9A6ZCvYQw-kGwRei-lEgE2TVA62ly2WTSLvXJmi2ArF1h8I7tZ6Jq6CcmTKBFIoFi/exec",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                }
+            );
+            const result = await response.json();
 
-*[+] Ram 4Gb*
-*[+] CPU 150%*
-*[+] Disk 10Gb*
-*[+] Rp15.000/Bulan*
-
-*[+] Ram 6Gb*
-*[+] CPU 200%*
-*[+] Disk 15Gb*
-*[+] Rp25.000/Bulan*
-
-*[+] Ram 8Gb*
-*[+] CPU 250%*
-*[+] Disk 20Gb*
-*[+] Rp35.000/Bulan*
-
-*[+] Ram 10Gb*
-*[+] CPU 300%*
-*[+] Disk 25Gb*
-*[+] Rp50.000/Bulan*
-
-📣 *Benefit :*
-*[+] Server Pribadi* 
-*[+] Bergaransi 30 Hari*  
-*[+] Script Kalian Terjamin Aman*  
-
-☘️ *Mau Beli? Bisa Chat :*
-🎁 *Chat :* wa.me/6283829814737
-🎁 *Langsung Ke Tele :* t.me/ilenwy`)
-}
-break
-
-// AI Menu =========================
-
-case "aimenu": {
-  lenwyreply(globalThis.aimenu)
-}
-break
-
-case "ai": {
-    if (!q) return lenwyreply("☘️ *Contoh:* Ai Apa itu JavaScript?")
-    lenwyreply(globalThis.mess.wait)
-    try {
-        const lenai = await Ai4Chat(q)
-        await lenwyreply(`*Lenwy AI*\n\n${lenai}`)
-    } catch (error) {
-        console.error("Error:", error)
-        lenwyreply(globalThis.mess.error)
+            console.log(result);
+        }
+        i++;
     }
+    lenwyreply(globalThis.operasionalSukses);
+}
+break
+
+// Add Order
+case "order": {
+    if (!q) return lenwyreply(globalThis.orderMsg), lenwyreply(globalThis.addorder);
+    const namaMatch = q.match(/Nama:\s*(.+)/i);
+    const nama = namaMatch ? namaMatch[1].trim() : null;
+    const noHpMatch = q.match(/No HP:\s*(\+?[0-9\s-]+)/i);
+
+    let noHp = noHpMatch
+        ? noHpMatch[1].replace(/[\s-]/g, '')
+        : null;
+
+    if (noHp) {
+        // +62895... → 62895...
+        noHp = noHp.replace(/^\+/, '');
+
+        // 0895... → 62895...
+        if (noHp.startsWith("0")) {
+            noHp = "62" + noHp.substring(1);
+        }
+    }
+    const lokasiMatch = q.match(/Lokasi\s*\(link google map\):\s*(.*)/i);
+    const lokasi = lokasiMatch ? lokasiMatch[1].trim() : null;
+
+// Process orders
+    const menuKeywords = [
+        {
+            menu: "Ayam Goreng Golden Brown",
+            keywords: ["brown", "golden"]
+        },
+        {
+            menu: "Ayam Goreng Kipas Rempah",
+            keywords: ["kipas", "rempah"]
+        },
+        {
+            menu: "Ayam Goreng Terasi Daun Jeruk",
+            keywords: ["terasi", "daun jeruk", "jeruk"]
+        },
+        {
+            menu: "Ayam Bakar Honey Savory",
+            keywords: ["bakar","madu", "honey", "savory"]
+        }
+    ];
+    
+    function fixMenuName(input) {
+        const normalized = input.toLowerCase().trim();
+
+        for (const item of menuKeywords) {
+            for (const keyword of item.keywords) {
+                if (normalized.includes(keyword)) {
+                    return item.menu;
+                }
+            }
+        }
+
+        return input; // keep original if no match
+    }
+
+    const orders = [...q.matchAll(
+        /^\s*\*\s*(.+?)\s*\((\d+)\)\s*$/gm
+    )].map(match => ({
+        menu: fixMenuName(match[1]),
+        jumlah: parseInt(match[2])
+    }));
+
+// Input to Spreadsheet
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzr0-I6G9UHZj4SimCBGAZso_zfq3ZCRgFiijdigKzlDstCZ-4STu7nm-LwAh1CY3fI/exec", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            nama: nama,
+            noHp: noHp,
+            orders: orders,
+            lokasi: lokasi
+        })
+    });
+
+    console.log("Status:", response.status);
+
+    const responseText = await response.text();
+
+    console.log("Apps Script response:");
+    console.log(responseText);
+    console.log("ORDERS:");
+    console.log(JSON.stringify(orders, null, 2));
 }
 break
 

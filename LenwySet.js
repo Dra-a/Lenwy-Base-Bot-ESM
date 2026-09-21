@@ -1,19 +1,3 @@
-/*  
-
-  Made By Lenwy
-  Base : Lenwy
-  WhatsApp : wa.me/6283829814737
-  Telegram : t.me/ilenwy
-  Youtube : @Lenwy
-
-  Channel : https://whatsapp.com/channel/0029VaGdzBSGZNCmoTgN2K0u
-
-  Copy Code?, Recode?, Rename?, Reupload?, Reseller? Taruh Credit Ya :D
-
-  Mohon Untuk Tidak Menghapus Watermark Di Dalam Kode Ini
-
-*/
-
 import chalk from 'chalk';
 import figlet from 'figlet';
 import { promisify } from 'util';
@@ -31,7 +15,7 @@ const config = {
 (async () => {
   try {
     if (config.whatsapp) {
-      console.log(chalk.green.bold('\n🎁  Menjalankan Lenwy Bot WhatsApp'));
+      console.log(chalk.green.bold('\n🎁  Menjalankan MyMealsMaid WhatsApp'));
       const { default: startWhatsApp } = await import('./WhatsApp/index.js');
       startWhatsApp(); // Jika kamu export default fungsi
     } else {
@@ -39,7 +23,7 @@ const config = {
     }
 
     if (config.telegram) {
-      console.log(chalk.green.bold('\n🎁  Menjalankan Lenwy Bot Telegram'));
+      console.log(chalk.green.bold('\n🎁  Menjalankan MyMealsMaid Telegram'));
       const { default: startTelegram } = await import('./Telegram/index.js');
       startTelegram();
     } else {
@@ -58,14 +42,10 @@ const config = {
     console.log(chalk.blue.bold(logo));
 
     console.log(chalk.white.bold(`${chalk.green.bold("📃  Informasi :")}         
-✉️  Script Lenwy Rebuild
-✉️  Author : Lenwy
-✉️  Gmail : ilenwyy@gmail.com
-✉️  Instagram : Ilenwy_
-✉️  Youtube : Lenwy
+✉️  Script Lenwy Rebuild by Draa
 🎁  Base : Lenwy
 
-${chalk.green.bold("🎁  Subscribe Lenwy :D")}\n`));
+${chalk.green.bold("MyMealsMaid at your service!")}\n`));
 
   } catch (err) {
     console.error(chalk.red.bold('\n⚠️  Terjadi Kesalahan : ' + err.message + '\n'));

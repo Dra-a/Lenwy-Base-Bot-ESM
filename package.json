@@ -1,7 +1,7 @@
 {
-  "name": "lenwy-rebuild",
+  "name": "mymealsmaid",
   "version": "1.0.0",
-  "description": "Lenwy Bot WhatsApp dan Telegram (MultiBot)",
+  "description": "Bot Whatsapp untuk MyMealsKost",
   "type": "module",
   "main": "LenwySet.js",
   "scripts": {
