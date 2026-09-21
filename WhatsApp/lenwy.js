@@ -317,7 +317,7 @@ break
 
 // Fetch Rekapan Order
 case "rekap": {
-    const response = await fetch("YOUR_APPS_SCRIPT_URL", {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzr0-I6G9UHZj4SimCBGAZso_zfq3ZCRgFiijdigKzlDstCZ-4STu7nm-LwAh1CY3fI/exec", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -331,6 +331,7 @@ case "rekap": {
 
     lenwyreply(`*Rekapan Order:*\n\n${rekap}`);
 }
+break
 
 // Download Menu =========================
 
