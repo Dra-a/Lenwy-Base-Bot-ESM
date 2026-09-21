@@ -296,6 +296,7 @@ case "order": {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
+            action: "addOrder",
             nama: nama,
             noHp: noHp,
             orders: orders,
@@ -313,6 +314,23 @@ case "order": {
     console.log(JSON.stringify(orders, null, 2));
 }
 break
+
+// Fetch Rekapan Order
+case "rekap": {
+    const response = await fetch("YOUR_APPS_SCRIPT_URL", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            action: "rekapOrder"
+        })
+    });
+
+    const rekap = await response.text();
+
+    lenwyreply(`*Rekapan Order:*\n\n${rekap}`);
+}
 
 // Download Menu =========================
 
