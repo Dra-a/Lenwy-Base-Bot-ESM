@@ -329,7 +329,24 @@ case "rekap": {
 
     const rekap = await response.text();
 
-    lenwyreply(`*Rekapan Order:*\n\n${rekap}`);
+    lenwyreply(`*🍗 Rekapan Order MyMealsKost 🍗*\n\n${rekap}`);
+}
+break
+
+case "deliv": {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzr0-I6G9UHZj4SimCBGAZso_zfq3ZCRgFiijdigKzlDstCZ-4STu7nm-LwAh1CY3fI/exec", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            action: "rekapDeliv"
+        })
+    });
+
+    const rekap = await response.text();
+
+    lenwyreply(`*🏍️ Delivery MyMealsKost 🏍️*\n\n${rekap}`);
 }
 break
 
